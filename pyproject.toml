@@ -1,0 +1,23 @@
+[build-system]
+requires = ["uv-build"]
+build-backend = "uv_build"
+
+[project]
+name = "hello-svc"
+version = "0"
+requires-python = "==3.13.*"
+dependencies = ["fastapi", "granian", "stamina"]
+
+[dependency-groups]
+dev = ["fastapi[standard]", "pytest", "coverage"]
+
+
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["hello_svc", "tests"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+omit = ["src/**/asgi.py"]
