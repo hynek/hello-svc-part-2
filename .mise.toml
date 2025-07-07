@@ -1,0 +1,103 @@
+[env]
+_.file = '.env'
+PROJECT_NAME = "{{ config_root | basename }}"
+PORT = "{{ get_env(name='PORT', default='8000') }}"
+ARGS_TEST = "{{ get_env(name='_UV_RUN_ARGS_TEST', default='') }}"
+ARGS_SERVE = "{{ get_env(name='_UV_RUN_ARGS_SERVE', default='') }}"
+# Automatic virtualenv activation
+_.python.venv = { path = ".venv", create = true, uv_create_args = ['--seed'] }
+
+
+[hooks]
+enter = ["echo 'Installing dependencies'", "mise run install"]
+
+
+[tools]
+python = "{{ get_env(name='PYTHON_VERSION', default='3.13') }}"
+uv = "latest"
+
+[tasks.cov]
+description = "Coverage"
+hide = true
+usage = '''
+arg "<arg>" "Arguments to pass to coverage"
+'''
+run = "uv run -m coverage {{arg(name='args', var=true)}}"
+
+[tasks."qa:test"]
+description = "Run tests"
+usage = '''
+arg "<arg>" "Arguments to pass to pytest" default=""
+'''
+run = "uv run $ARGS_TEST -m pytest {{option(name='args', var=true)}}"
+
+[tasks."qa:cov"]
+description = "Run Linters"
+run = [
+    "mise run cov erase",
+    "mise run cov run -m pytest tests",
+    # Ensure ASGI entrypoint is importable.
+    # You can also use coverage to run your CLI entrypoints.
+    "mise run cov run -m hello_svc.asgi",
+    "mise run cov combine",
+    "mise run cov report",
+    "mise run cov html",
+]
+
+[tasks."qa:lint"]
+description = "Run Linters"
+run = [
+    "uvx ruff check",
+    "uvx ruff format",
+]
+
+
+[tasks."qa:typing"]
+description = "Check types"
+run ="uvx ty check --python .venv src"
+
+
+[tasks."qa:check-all"]
+description = "Perform all checks"
+depends = ["qa:lint", "qa:cov", "qa:typing"]
+
+
+[tasks."run:serve"]
+description = "Run development server"
+run = "uv run $ARGS_SERVE -m fastapi dev src/hello_svc/asgi.py --port $PORT"
+
+
+[tasks."run:seq"]
+description = "Send HTTP request to development server"
+usage = '''
+arg "<arg>" "Arguments to pass to httpie" default=""
+arg "<path>" "Arguments to pass to URL" default=""
+'''
+run = "uvx --from httpie http {{arg(name='args', var=true)}} http://127.0.0.1:$PORT/{{option(name='path')}}"
+
+
+[tasks."run:browser"]
+description = "Open development server in web browser"
+run = "uv run -m webbrowser -t http://127.0.0.1:$PORT"
+
+
+[tasks."lifecycle:update"]
+description = "Update dependencies"
+run = "uv lock --upgrade"
+
+
+[tasks."lifecycle:install"]
+alias = "install"
+description = "Ensure project virtualenv is up to date"
+run = "uv sync"
+
+
+[tasks."lifecycle:clean"]
+description = "Remove temporary files"
+run = "rm -rf .venv .pytest_cache .mypy_cache .ruff_cache .coverage htmlcov find . -type d -name '__pycache__' -exec rm -r {} +"
+
+
+[tasks."lifecycle:fresh"]
+description = "Recreate project virtualenv from nothing"
+alias = "f"
+depends = ["lifecycle:clean", "lifecycle:install"]
