@@ -1,11 +1,11 @@
 [env]
 _.file = '.env'
+# Automatic virtualenv activation
+_.python.venv = { path = ".venv", create = true, uv_create_args = ['--seed'] }
 PROJECT_NAME = "{{ config_root | basename }}"
 PORT = "{{ get_env(name='PORT', default='8000') }}"
 ARGS_TEST = "{{ get_env(name='_UV_RUN_ARGS_TEST', default='') }}"
 ARGS_SERVE = "{{ get_env(name='_UV_RUN_ARGS_SERVE', default='') }}"
-# Automatic virtualenv activation
-_.python.venv = { path = ".venv", create = true, uv_create_args = ['--seed'] }
 
 
 [hooks]
@@ -16,6 +16,7 @@ enter = ["echo 'Installing dependencies'", "mise run install"]
 python = "{{ get_env(name='PYTHON_VERSION', default='3.13') }}"
 uv = "latest"
 
+
 [tasks.cov]
 description = "Coverage"
 hide = true
@@ -24,6 +25,7 @@ arg "<arg>" "Arguments to pass to coverage"
 '''
 run = "uv run -m coverage {{arg(name='args', var=true)}}"
 
+
 [tasks."qa:test"]
 description = "Run tests"
 usage = '''
@@ -31,30 +33,29 @@ arg "<arg>" "Arguments to pass to pytest" default=""
 '''
 run = "uv run $ARGS_TEST -m pytest {{option(name='args', var=true)}}"
 
+
 [tasks."qa:cov"]
 description = "Run Linters"
 run = [
-    "mise run cov erase",
-    "mise run cov run -m pytest tests",
-    # Ensure ASGI entrypoint is importable.
-    # You can also use coverage to run your CLI entrypoints.
-    "mise run cov run -m hello_svc.asgi",
-    "mise run cov combine",
-    "mise run cov report",
-    "mise run cov html",
+  "mise run cov erase",
+  "mise run cov run -m pytest tests",
+  # Ensure ASGI entrypoint is importable.
+  # You can also use coverage to run your CLI entrypoints.
+  "mise run cov run -m hello_svc.asgi",
+  "mise run cov combine",
+  "mise run cov report",
+  "mise run cov html",
 ]
+
 
 [tasks."qa:lint"]
 description = "Run Linters"
-run = [
-    "uvx ruff check",
-    "uvx ruff format",
-]
+run = ["uvx ruff check", "uvx ruff format"]
 
 
 [tasks."qa:typing"]
 description = "Check types"
-run ="uvx ty check --python .venv src"
+run = "uvx ty check --python .venv src"
 
 
 [tasks."qa:check-all"]
