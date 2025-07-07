@@ -66,8 +66,8 @@ browser:
 
 # Update dependencies
 [group('lifecycle')]
-update: && install
-    uv lock --upgrade
+update:
+    uv sync --upgrade
 
 # Ensure project virtualenv is up to date
 [group('lifecycle')]
