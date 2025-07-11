@@ -77,8 +77,8 @@ install:
 # Remove temporary files
 [group('lifecycle')]
 clean:
-    rm -rf .venv .pytest_cache .mypy_cache .ruff_cache .coverage htmlcov
-    find . -type d -name "__pycache__" -exec rm -r {} +
+    uv run python -c "import shutil; shutil.rmtree('.venv', ignore_errors=True)"
+    uvx pyclean . -d all
 
 # Recreate project virtualenv from nothing
 [group('lifecycle')]
